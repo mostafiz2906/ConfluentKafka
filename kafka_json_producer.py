@@ -248,4 +248,4 @@ def main(topic):
     # print("\nFlushing records...")
     # producer.flush()
 
-main("test-topic-1")
+main("test-topic-2")
