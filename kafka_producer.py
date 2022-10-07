@@ -29,6 +29,11 @@ class Order(object):
         self.ProductPrice = productPrice
         self.TotalProducts = totalProducts
 
+    def dict_to_order(dict_order, ctx):
+        return Order(dict_order['OrderNumber'], dict_order['OrderDate'],
+                     dict_order['ItemName'], dict_order['Quantity'],
+                     dict_order['Quantity'], dict_order['TotalProducts'])
+
 
 def order_to_dict(order, ctx):
     return dict(OrderNumber=order.OrderNumber,
@@ -37,6 +42,9 @@ def order_to_dict(order, ctx):
                 Quantity=order.Quantity,
                 ProductPrice=order.ProductPrice,
                 TotalProducts=order.TotalProducts)
+
+
+
 
 
 def delivery_report(err, msg):
@@ -53,9 +61,9 @@ def sasl_conf():
                 'security.protocol': SECURITY_PROTOCOL,
                 'sasl.username': API_KEY,
                 'sasl.password': API_SECRET_KEY,
-                #'batch.size': 280,
+                'batch.size': 10000,
                 #'batch.num.messages': 5,
-                #'linger.ms': 1000
+                'linger.ms': 1000
                 }
     return sasl_conf
 
@@ -86,7 +94,7 @@ def main(topic):
         order_data = Order(order_data_dict['OrderNumber'], order_data_dict['OrderDate'],
                            order_data_dict['ItemName'], order_data_dict['Quantity'],
                            order_data_dict['Quantity'], order_data_dict['TotalProducts'])
-        print(order_data_dict)
+        # print(order_data_dict)
         try:
             producer.produce(topic=topic,
                              key=string_serializer(str(uuid4()), order_to_dict),
@@ -99,7 +107,7 @@ def main(topic):
                              key=string_serializer(str(uuid4()), order_to_dict),
                              value=json_serializer(order_data, SerializationContext(topic, MessageField.VALUE)),
                              on_delivery=delivery_report)
-        break
+        # break
     producer.flush()
 
 
