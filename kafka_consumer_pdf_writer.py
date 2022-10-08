@@ -3,7 +3,10 @@ from confluent_kafka.serialization import SerializationContext, MessageField
 from confluent_kafka.schema_registry.json_schema import JSONDeserializer
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from kafka_producer import Order
-from kafka_producer import order_to_dict
+import pandas as pd
+
+
+columns=['OrderNumber', 'OrderDate', 'ItemName', 'Quantity', 'ProductPrice', 'TotalProducts']
 
 API_KEY = 'I57XO5UL5QJCDYQY'
 ENDPOINT_SCHEMA_URL  = 'https://psrc-mw731.us-east-2.aws.confluent.cloud'
@@ -65,14 +68,14 @@ def main(topic):
 
     consumer_conf = sasl_conf()
     consumer_conf.update({
-        'group.id': 'group1',
+        'group.id': 'pdfWriter',
         'auto.offset.reset': "earliest"})
 
     consumer = Consumer(consumer_conf)
     consumer.subscribe([topic])
 
     count_kafka_consumer1_same_group = 0
-
+    csvDf = pd.DataFrame(columns=columns)
     while True:
         try:
             # SIGINT can't be handled when polling, limit timeout to 1 second.
@@ -85,8 +88,12 @@ def main(topic):
             if order is not None:
                 print("User record {}: order Number: {}\n"
                       .format(msg.key(), order.OrderNumber))
+                csvDf.loc[count_kafka_consumer1_same_group] = [order.OrderNumber, order.OrderDate,
+                                                               order.ItemName, order.Quantity,
+                                                               order.ProductPrice, order.TotalProducts]
                 count_kafka_consumer1_same_group += 1
         except KeyboardInterrupt:
+            csvDf.to_csv("consumer_out.csv")
             break
 
     consumer.close()
